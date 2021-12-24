@@ -95,6 +95,10 @@ func (t *Target) Supports(feature ProtocolFeature) bool {
 // You can keep track of progress by passing in an io.TeeReader(r,
 // &countingWriter{}).
 func (t *Target) StreamTo(dest string, r io.Reader) error {
+	return t.StreamToOffset(dest, 0, r)
+}
+
+func (t *Target) StreamToOffset(dest string, offset int64, r io.Reader) error {
 	updateHash := t.Supports("updatehash")
 	var hash hash.Hash
 	if updateHash {
@@ -108,6 +112,9 @@ func (t *Target) StreamTo(dest string, r io.Reader) error {
 	}
 	if updateHash {
 		req.Header.Set("X-Gokrazy-Update-Hash", "crc32")
+	}
+	if offset > 0 {
+		req.Header.Set("X-Gokrazy-Update-Offset", fmt.Sprintf("%d", offset))
 	}
 	resp, err := t.doer.Do(req)
 	if err != nil {
